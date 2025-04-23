@@ -7,9 +7,44 @@ import geopandas
 import folium
 from folium.plugins import MarkerCluster
 from streamlit.components.v1 import html
+import os
 
+# path = "./dataset/all_PRSA_Data.csv"
+# cleaned_df = pd.read_csv(path)
+dataset_path = './dataset'
 
-cleaned_df = pd.read_csv("./dataset/cleaned_PRSA_Data.csv")
+csv_files = [f for f in os.listdir(dataset_path) if f.endswith('.csv')]
+
+# Load Datasets
+dataframes = []
+for csv_file in csv_files:
+    file_path = os.path.join(dataset_path, csv_file)
+    df = pd.read_csv(file_path, index_col=[0])
+    dataframes.append(df)
+    print(f"Data from file {csv_file}")
+
+df = pd.concat(dataframes, ignore_index=True)
+
+# Cleaning Data
+cleaned_placeholder = []
+for station in df["station"].unique():
+    station_df = df.loc[df["station"] == station]
+    for column in df.select_dtypes(include="float64").columns:
+        station_df[column] = pd.to_numeric(station_df[column], errors='coerce')
+        station_df[column].interpolate(method="linear", limit_direction="forward", inplace=True)
+        station_df[column].interpolate(method="linear", limit_direction="backward", inplace=True)
+    cleaned_placeholder.append(station_df)
+
+cleaned_df = pd.concat(cleaned_placeholder, ignore_index=True)
+cleaned_df.isna().sum()
+
+wd_mode = cleaned_df["wd"].mode()[0]
+cleaned_df["wd"] = cleaned_df["wd"].fillna(wd_mode)
+cleaned_df["date"] = pd.to_datetime(cleaned_df[["year", "month", "day", "hour"]])
+cleaned_df["rain_cat"] = pd.cut(cleaned_df["RAIN"],
+                            bins=[-0.1,0,2.5,7.6,50, cleaned_df["RAIN"].max()],
+                            labels=["None", "Light", "Moderate", "Heavy", "Very Heavy"]
+                        )
 
 st.title("Analisis dan Visualisasi Data Air Quality")
 
@@ -176,7 +211,6 @@ for idx, row in geo_df.iterrows():
         fill_opacity=0.6
     ).add_to(marker_cluster)
 
-import os
 folium_html = "no2_pollution_map.html"
 if not os.path.exists(folium_html):
     print("Folium html does not exist")
@@ -186,9 +220,3 @@ with open(folium_html, "r") as f:
     map_html = f.read()
 
 html(map_html, height=500)
-
-
-
-
-
-
