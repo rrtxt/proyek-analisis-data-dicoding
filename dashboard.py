@@ -176,8 +176,11 @@ for idx, row in geo_df.iterrows():
         fill_opacity=0.6
     ).add_to(marker_cluster)
 
+import os
 folium_html = "no2_pollution_map.html"
-mymap.save(folium_html)
+if not os.path.exists(folium_html):
+    print("Folium html does not exist")
+    mymap.save(folium_html)
 
 with open(folium_html, "r") as f:
     map_html = f.read()
