@@ -40,7 +40,7 @@ pip install -r requirements.txt
 5. Jalankan aplikasi:
 
 ```bash
-streamlit run dsahboard.py
+streamlit run dashboard.py
 ```
 
 Aplikasi akan berjalan dan dapat diakses melalui browser di http://localhost:8501.
