@@ -9,6 +9,7 @@ from folium.plugins import MarkerCluster
 from streamlit.components.v1 import html
 import os
 
+st.session_state.clear()
 # path = "./dataset/all_PRSA_Data.csv"
 # cleaned_df = pd.read_csv(path)
 dataset_path = './dataset'
