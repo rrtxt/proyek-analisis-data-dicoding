@@ -36,7 +36,6 @@ for station in df["station"].unique():
     cleaned_placeholder.append(station_df)
 
 cleaned_df = pd.concat(cleaned_placeholder, ignore_index=True)
-cleaned_df.isna().sum()
 
 wd_mode = cleaned_df["wd"].mode()[0]
 cleaned_df["wd"] = cleaned_df["wd"].fillna(wd_mode)
@@ -161,58 +160,58 @@ st.pyplot(fig)
 st.subheader("Visualisasi Geografi Daerah Terkena Polusi NO2 Tahun 2017")
 stations = cleaned_df["station"].unique()
 geolocator = geopy.geocoders.Nominatim(user_agent="air_quality")
-
-data_station = []
-data_lat = []
-data_lon = []
-
-for station in stations:
-    location = geolocator.geocode(station)
-    if location is None:
-        continue
-    data_station.append(station)
-    data_lat.append(location.latitude)
-    data_lon.append(location.longitude)
-
-geo_df = pd.DataFrame({
-    "Station" : data_station,
-    "Latitude" : data_lat,
-    "Longitude" : data_lon,
-    "NO2" : polution_sum_by_station[polution_sum_by_station["station"] != "Wanshouxigong"]["sum"]
-})
-
-gdf = geopandas.GeoDataFrame(
-    geo_df, geometry=geopandas.points_from_xy(geo_df.Longitude, geo_df.Latitude)
-)
-
-map_center = [geo_df["Latitude"].mean(), geo_df["Longitude"].mean()]
-
-mymap = folium.Map(
-    location=map_center,      
-    zoom_start=6,
-    min_zoom=5,
-    max_zoom=10
-)
-bounds = [[geo_df["Latitude"].min(), geo_df["Longitude"].min()],
-          [geo_df["Latitude"].max(), geo_df["Longitude"].max()]]
-
-mymap.fit_bounds(bounds)
-
-marker_cluster = MarkerCluster().add_to(mymap)
-for idx, row in geo_df.iterrows():
-    folium.CircleMarker(
-        location=[row["Latitude"], row["Longitude"]],
-        radius=8,  
-        popup=f'{row["Station"]}: {row["NO2"]:.2f} µg/m³',  
-        tooltip=f'{row["Station"]}: {row["NO2"]:.2f} µg/m³',
-        color="blue",
-        fill=True,
-        fill_color="blue",
-        fill_opacity=0.6
-    ).add_to(marker_cluster)
-
 folium_html = "no2_pollution_map.html"
+
 if not os.path.exists(folium_html):
+    data_station = []
+    data_lat = []
+    data_lon = []
+
+    for station in stations:
+        location = geolocator.geocode(station)
+        if location is None:
+            continue
+        data_station.append(station)
+        data_lat.append(location.latitude)
+        data_lon.append(location.longitude)
+
+    geo_df = pd.DataFrame({
+        "Station" : data_station,
+        "Latitude" : data_lat,
+        "Longitude" : data_lon,
+        "NO2" : polution_sum_by_station[polution_sum_by_station["station"] != "Wanshouxigong"]["sum"]
+    })
+
+    gdf = geopandas.GeoDataFrame(
+        geo_df, geometry=geopandas.points_from_xy(geo_df.Longitude, geo_df.Latitude)
+    )
+
+    map_center = [geo_df["Latitude"].mean(), geo_df["Longitude"].mean()]
+
+    mymap = folium.Map(
+        location=map_center,      
+        zoom_start=6,
+        min_zoom=5,
+        max_zoom=10
+    )
+    bounds = [[geo_df["Latitude"].min(), geo_df["Longitude"].min()],
+              [geo_df["Latitude"].max(), geo_df["Longitude"].max()]]
+
+    mymap.fit_bounds(bounds)
+
+    marker_cluster = MarkerCluster().add_to(mymap)
+    for idx, row in geo_df.iterrows():
+        folium.CircleMarker(
+            location=[row["Latitude"], row["Longitude"]],
+            radius=8,  
+            popup=f'{row["Station"]}: {row["NO2"]:.2f} µg/m³',  
+            tooltip=f'{row["Station"]}: {row["NO2"]:.2f} µg/m³',
+            color="blue",
+            fill=True,
+            fill_color="blue",
+            fill_opacity=0.6
+        ).add_to(marker_cluster)
+    
     print("Folium html does not exist")
     mymap.save(folium_html)
 
