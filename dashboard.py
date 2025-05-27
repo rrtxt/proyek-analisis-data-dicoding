@@ -84,7 +84,24 @@ st.pyplot(fig)
 
 # Tren Rata-Rata Curah Hujan Tiap Kota
 st.subheader("Visualisasi Tren Rata-Rata Curah Hujan Dari Tiap Kota")
-sub = cleaned_df[["station", "year","RAIN"]]
+
+# Year range filter
+min_year = cleaned_df["year"].min()
+max_year = cleaned_df["year"].max()
+
+start_year, end_year = st.slider(
+    "Pilih rentang tahun:",
+    min_value=min_year,
+    max_value=max_year,
+    value=(min_year, max_year),
+    key="rain_trend_year_filter"
+)
+
+filtered_df_by_year = cleaned_df[
+    (cleaned_df["year"] >= start_year) & (cleaned_df["year"] <= end_year)
+]
+
+sub = filtered_df_by_year[["station", "year","RAIN"]]
 
 rain_by_station = sub.groupby(by="station").agg({
     "RAIN":  ["sum", "mean", "median","min", "max"]
@@ -105,28 +122,32 @@ rain_sum_per_year = (
 ) 
 
 rain_sum_per_year.rename(columns={'sum': 'total_rain'}, inplace=True)
-rain_pivot = rain_sum_per_year.pivot(
-    index="year",
-    columns="station",
-    values="total_rain"
-)
-
-fig, ax = plt.subplots(figsize=(12,6))
-for station in rain_pivot.columns:
-    plt.plot(
-        rain_pivot.index,
-        rain_pivot[station],
-        marker='o',
-        label=station
+if not rain_sum_per_year.empty:
+    rain_pivot = rain_sum_per_year.pivot(
+        index="year",
+        columns="station",
+        values="total_rain"
     )
 
-plt.title('Perkembangan Total Curah Hujan per Tahun (2013–2017)')
-plt.xlabel('Tahun')
-plt.ylabel('Total Curah Hujan (mm)')
-plt.xticks(rain_pivot.index)        # tampilkan tiap tahun
-plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', ncol=1)
-plt.tight_layout()
-st.pyplot(fig)
+    fig, ax = plt.subplots(figsize=(12,6))
+    for station in rain_pivot.columns:
+        plt.plot(
+            rain_pivot.index,
+            rain_pivot[station],
+            marker='o',
+            label=station
+        )
+
+    plt.title(f'Perkembangan Total Curah Hujan Tahun {start_year} - {end_year}')
+    plt.xlabel('Tahun')
+    plt.ylabel('Total Curah Hujan (mm)')
+    if not rain_pivot.empty:
+        plt.xticks(rain_pivot.index) # tampilkan tiap tahun
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', ncol=1)
+    plt.tight_layout()
+    st.pyplot(fig)
+else:
+    st.write("Tidak ada data untuk rentang tanggal yang dipilih.")
 
 # Persebaran Polusi NO2 pada tahun 2017
 st.subheader("Persebaran Jumlah Polusi NO2 di Tiap Kota pada Tahun 2017")
